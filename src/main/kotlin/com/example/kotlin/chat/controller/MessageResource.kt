@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitExchange
 import reactor.netty.http.client.HttpClient
+import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/messages")
@@ -55,6 +56,7 @@ class MessageResource(val messageService: MessageService) {
             body(
                 messageService.all().onEach {
                     logger.info("issued httpbin.org/delay")
+                    // logger.info("Should cause blocking error ${UUID.randomUUID()}")
                     webClient.get().uri("/delay/" + (delayMs / 1000)).awaitExchange {
                         logger.info("response ${it.statusCode()}")
                     }
