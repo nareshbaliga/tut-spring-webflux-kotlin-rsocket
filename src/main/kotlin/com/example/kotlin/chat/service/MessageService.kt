@@ -7,4 +7,6 @@ interface MessageService {
     suspend fun after(messageId: String): List<MessageVM>
 
     suspend fun post(message: MessageVM)
+
+    suspend fun all(): List<MessageVM>
 }

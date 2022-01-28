@@ -38,6 +38,10 @@ dependencies {
 	runtimeOnly("com.h2database:h2")
 
 	implementation("org.jetbrains:markdown:0.2.2")
+
+	implementation("io.projectreactor.tools:blockhound:1.0.6.RELEASE")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug")
+
 }
 
 tasks.withType<Test> {
