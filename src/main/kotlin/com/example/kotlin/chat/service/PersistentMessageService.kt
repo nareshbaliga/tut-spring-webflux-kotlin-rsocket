@@ -18,6 +18,9 @@ class PersistentMessageService(val messageRepository: MessageRepository) : Messa
         messageRepository.findLatest(messageId)
             .mapToViewModel()
 
+    override fun all(): Iterable<MessageVM> =
+        messageRepository.findAll().mapToViewModel()
+
     override fun post(message: MessageVM) {
         messageRepository.save(message.asDomainObject())
     }

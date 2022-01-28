@@ -38,4 +38,8 @@ class FakeMessageService : MessageService {
     override fun post(message: MessageVM) {
         TODO("Not yet implemented")
     }
+
+    override fun all(): Iterable<MessageVM> {
+        TODO("Not yet implemented")
+    }
 }
