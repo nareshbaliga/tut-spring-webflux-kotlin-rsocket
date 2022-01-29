@@ -21,7 +21,7 @@ import reactor.netty.http.server.logging.AccessLog
 class ChatKotlinApplication
 
 fun main(args: Array<String>) {
-    System.setProperty("reactor.netty.ioWorkerCount", "1")
+    // System.setProperty("reactor.netty.ioWorkerCount", "1")
     BlockHound.install()
     runApplication<ChatKotlinApplication>(*args)
 }
@@ -49,6 +49,7 @@ class NettyCustomizer(val logCustomizer: LogCustomizer) : WebServerFactoryCustom
 @Component
 class LogCustomizer : NettyServerCustomizer {
     override fun apply(httpServer: HttpServer?): HttpServer? {
-        return httpServer?.accessLog(true, { x -> AccessLog.create("method={}, uri={}", x.method(), x.uri()) })
+        return httpServer
+        // return httpServer?.accessLog(true, { x -> AccessLog.create("method={}, uri={}", x.method(), x.uri()) })
     }
 }

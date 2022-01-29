@@ -27,6 +27,7 @@ class MessageResource(val messageService: MessageService) {
     suspend fun latest(
         @RequestParam(value = "lastMessageId", defaultValue = "") lastMessageId: String
     ): ResponseEntity<List<MessageVM>> {
+        logger.debug("Executing latest()")
         val messages = if (lastMessageId.isNotEmpty()) {
             messageService.after(lastMessageId)
         } else {
@@ -50,18 +51,18 @@ class MessageResource(val messageService: MessageService) {
     suspend fun all(
         @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long
     ): ResponseEntity<List<MessageVM>> {
-        logger.info("Executing all() with delay $delayMs")
+        logger.debug("Executing all() with delay $delayMs")
         return with(ResponseEntity.ok()) {
             body(
                 messageService.all().onEach {
                     // logger.info("Should cause blocking error ${UUID.randomUUID()}")
                     if (delayMs >= 1000L) {
-                        logger.info("issued httpbin.org/delay")
+                        // logger.info("issued httpbin.org/delay")
                         webClient.get().uri("/delay/" + (delayMs / 1000)).awaitExchange {
-                            logger.info("response ${it.statusCode()}")
+                            logger.debug("response ${it.statusCode()}")
                         }
                     }
-                    logger.info("Found Message $it")
+                    // logger.info ("Found Message $it")
                 }
             )
         }
