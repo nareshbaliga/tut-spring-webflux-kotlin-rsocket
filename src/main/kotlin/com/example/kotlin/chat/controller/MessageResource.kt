@@ -44,20 +44,20 @@ class MessageResource(val messageService: MessageService) {
     fun all(
         @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long
     ): Iterable<MessageVM> {
-        logger.info("Executing all() with delay $delayMs")
+        logger.debug("Executing all() with delay $delayMs")
 
         return messageService.all().onEach {
             if (delayMs >= 1000L) {
-                logger.info("issued httpbin.org/delay")
+                logger.debug("issued httpbin.org/delay")
                 val response = restTemplate.exchange(
                     "https://httpbin.org/delay/${delayMs / 1000L}",
                     HttpMethod.GET,
                     null,
                     String::class.java
                 )
-                logger.info("response ${response.statusCode}")
+                logger.debug("response ${response.statusCode}")
             }
-            logger.info("Found Message $it")
+            logger.debug("Found Message $it")
         }
     }
 
