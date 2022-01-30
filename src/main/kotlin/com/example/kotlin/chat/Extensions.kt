@@ -7,6 +7,8 @@ import com.example.kotlin.chat.service.UserVM
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.MarkdownParser
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.net.URL
 
 fun MessageVM.asDomainObject(contentType: ContentType = ContentType.MARKDOWN): Message = Message(
@@ -26,6 +28,8 @@ fun Message.asViewModel(): MessageVM = MessageVM(
 )
 
 fun List<Message>.mapToViewModel(): List<MessageVM> = map { it.asViewModel() }
+
+fun Flux<Message>.mapToViewModel(): Flux<MessageVM> = flatMap { Mono.just(it.asViewModel()) }
 
 fun ContentType.render(content: String): String = when (this) {
     ContentType.PLAIN -> content

@@ -13,14 +13,29 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitExchange
+import reactor.core.publisher.Flux
 import reactor.netty.http.client.HttpClient
+import reactor.netty.resources.ConnectionProvider
+import java.time.Duration
 
 @RestController
 @RequestMapping("/api/v1/messages")
 class MessageResource(val messageService: MessageService) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val webClient =
-        WebClient.builder().clientConnector(ReactorClientHttpConnector(HttpClient.create().compress(true).secure()))
+        WebClient.builder().clientConnector(
+            ReactorClientHttpConnector(
+                HttpClient.create(
+/*
+                    ConnectionProvider.builder("myConnectionPool")
+                        .maxConnections(500)
+                        .pendingAcquireMaxCount(-1)
+                        .pendingAcquireTimeout(Duration.ofMillis(180_000))
+                        .build()
+*/
+                ).compress(true).secure()
+            )
+        )
             .baseUrl("httpbin.org").build()
 
     @GetMapping
@@ -55,16 +70,37 @@ class MessageResource(val messageService: MessageService) {
         return with(ResponseEntity.ok()) {
             body(
                 messageService.all().onEach {
-                    // logger.info("Should cause blocking error ${UUID.randomUUID()}")
+                    // logger.debug("Should cause blocking error ${UUID.randomUUID()}")
                     if (delayMs >= 1000L) {
-                        // logger.info("issued httpbin.org/delay")
+                        // logger.debug("issued httpbin.org/delay")
                         webClient.get().uri("/delay/" + (delayMs / 1000)).awaitExchange {
                             logger.debug("response ${it.statusCode()}")
                         }
                     }
-                    // logger.info ("Found Message $it")
+                    // logger.debug ("Found Message $it")
                 }
             )
+        }
+    }
+
+    @GetMapping("/all-flux")
+    fun allFlux(
+        @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long
+    ): Flux<MessageVM> {
+
+        return if (delayMs >= 1000L) {
+            // logger.debug("issued httpbin.org/delay")
+            webClient.get().uri("/delay/" + (delayMs / 1000)).retrieve().bodyToMono(String::class.java)
+                .flatMapMany {
+                    logger.debug(it)
+                    messageService.allFlux().doOnEach { messageVM ->
+                        logger.debug("Found message ${messageVM.get()}")
+                    }
+                }
+        } else {
+            messageService.allFlux().doOnEach {
+                logger.debug("Found message ${it.get()}")
+            }
         }
     }
 
