@@ -12,11 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.awaitExchange
+import org.springframework.web.reactive.function.client.awaitBody
 import reactor.core.publisher.Flux
 import reactor.netty.http.client.HttpClient
-import reactor.netty.resources.ConnectionProvider
-import java.time.Duration
 
 @RestController
 @RequestMapping("/api/v1/messages")
@@ -67,17 +65,14 @@ class MessageResource(val messageService: MessageService) {
         @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long
     ): ResponseEntity<List<MessageVM>> {
         logger.debug("Executing all() with delay $delayMs")
+        if (delayMs >= 1000L) {
+            val response = webClient.get().uri("/delay/" + (delayMs / 1000)).retrieve().awaitBody<String>()
+            logger.debug(response)
+        }
         return with(ResponseEntity.ok()) {
             body(
-                messageService.all().onEach {
-                    // logger.debug("Should cause blocking error ${UUID.randomUUID()}")
-                    if (delayMs >= 1000L) {
-                        // logger.debug("issued httpbin.org/delay")
-                        webClient.get().uri("/delay/" + (delayMs / 1000)).awaitExchange {
-                            logger.debug("response ${it.statusCode()}")
-                        }
-                    }
-                    // logger.debug ("Found Message $it")
+                messageService.all().onEach { messageVM ->
+                    logger.debug("Found message $messageVM")
                 }
             )
         }
