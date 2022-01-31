@@ -14,15 +14,19 @@ import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
 import org.springframework.stereotype.Component
 import reactor.blockhound.BlockHound
+import reactor.blockhound.integration.BlockHoundIntegration
 import reactor.netty.http.server.HttpServer
-import reactor.netty.http.server.logging.AccessLog
 
 @SpringBootApplication
 class ChatKotlinApplication
 
 fun main(args: Array<String>) {
     // System.setProperty("reactor.netty.ioWorkerCount", "1")
-    BlockHound.install()
+    BlockHound.install(
+        BlockHoundIntegration {
+            it.allowBlockingCallsInside("java.util.UUID", "randomUUID")
+        }
+    )
     runApplication<ChatKotlinApplication>(*args)
 }
 

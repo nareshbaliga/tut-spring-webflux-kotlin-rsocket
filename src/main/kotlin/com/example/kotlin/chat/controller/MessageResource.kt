@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
 import reactor.core.publisher.Flux
 import reactor.netty.http.client.HttpClient
+import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/messages")
@@ -62,12 +63,17 @@ class MessageResource(val messageService: MessageService) {
 
     @GetMapping("/all")
     suspend fun all(
-        @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long
+        @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long,
+        @RequestParam(value = "block", defaultValue = "false") block: Boolean
     ): ResponseEntity<List<MessageVM>> {
         logger.debug("Executing all() with delay $delayMs")
         if (delayMs >= 1000L) {
             val response = webClient.get().uri("/delay/" + (delayMs / 1000)).retrieve().awaitBody<String>()
             logger.debug(response)
+        }
+        if (block) {
+            val rand = UUID.randomUUID()
+            logger.debug("$rand")
         }
         return with(ResponseEntity.ok()) {
             body(
@@ -80,14 +86,18 @@ class MessageResource(val messageService: MessageService) {
 
     @GetMapping("/all-flux")
     fun allFlux(
-        @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long
+        @RequestParam(value = "delay", defaultValue = "1000") delayMs: Long,
+        @RequestParam(value = "block", defaultValue = "false") block: Boolean
     ): Flux<MessageVM> {
 
         return if (delayMs >= 1000L) {
-            // logger.debug("issued httpbin.org/delay")
             webClient.get().uri("/delay/" + (delayMs / 1000)).retrieve().bodyToMono(String::class.java)
                 .flatMapMany {
                     logger.debug(it)
+                    if (block) {
+                        val rand = UUID.randomUUID()
+                        logger.debug("$rand")
+                    }
                     messageService.allFlux().doOnEach { messageVM ->
                         logger.debug("Found message ${messageVM.get()}")
                     }
